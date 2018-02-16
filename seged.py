@@ -13,251 +13,162 @@ import sys
     argv[4] --> ha van szükség a feldolgozási lépések megjelenítésére, akkor ez megadja, hogy melyik képen
     argv[5] --> a kép sorszáma. (A feldolgozandó képek között hányadik.)
 --------------------------------------
+
+------------Kiegészítés---------------
+    " _ " nevű változó egy "szemét változó", ebben tárolom azokat a visszaadott értékeket, amelyeket nem használok
+--------------------------------------
+
 """
-
-TRESHHOLDMIN = 210 #Ez a treshold érték volt a leghatékonyabb
-
 #------------------------------------------------------------------
 img_input = cv2.imread("C:\\Users\\Adam\\Desktop\\samples\\hulk1.jpg") #1--> greyscale
 #img_input = cv2.imread(sys.argv[1]) #1--> greyscale
 #------------------------------------------------------------------
 
+#konstansok definiálása, valamint a maszkok létrehozása
+TRESHHOLDMIN = 210 #Ez a treshold érték volt a leghatékonyabb
 ROWS,COLLUMS,_ = img_input.shape
-
+maskForTheFill = np.zeros((ROWS+2, COLLUMS+2), np.uint8) #Mask a fillhez
+maskForTheContours = np.zeros((ROWS, COLLUMS), dtype=np.uint8) #mask a conturokhoz
 LETTERHIGHT = ROWS / 200 # áltában egy betű mérete így viszonyul magának az oldalnak a méretéhez
 
+#Szürkeárnyalatossá alakítás, majd binarizálás
 img_greyscaled = cv2.cvtColor(img_input, cv2.COLOR_BGR2GRAY)
+_, img_thresholded = cv2.threshold(img_greyscaled, TRESHHOLDMIN, 255, cv2.THRESH_BINARY_INV);
 
-
-th, im_th = cv2.threshold(img_greyscaled, TRESHHOLDMIN, 255, cv2.THRESH_BINARY_INV);
-#cv2.imwrite("02.jpg", im_th)-----------------------------------------------------------------------------------------------------
-
-#Mask a fillhez
-mask = np.zeros((ROWS+2, COLLUMS+2), np.uint8)
-
-im_frame = im_th.copy()
-cv2.floodFill(im_frame, mask, (0,0), 128)
-cv2.floodFill(im_frame, mask, (COLLUMS-1,0), 128)
-cv2.floodFill(im_frame, mask, (0,ROWS-1), 128)
-cv2.floodFill(im_frame, mask, (COLLUMS-1,ROWS-1), 128)
-#cv2.imwrite("03.0.jpg", im_frame)-----------------------------------------------------------------------------------------------------
-
-#--------------------------------------
-#a négy sarokról kitöltöm a keretet
-cv2.floodFill(im_th, mask, (0,0), 255)
-cv2.floodFill(im_th, mask, (COLLUMS-1,0), 255)
-cv2.floodFill(im_th, mask, (0,ROWS-1), 255)
-cv2.floodFill(im_th, mask, (COLLUMS-1,ROWS-1), 255)
-#cv2.imwrite("03.jpg", im_th)-----------------------------------------------------------------------------------------------------
-#--------------------------------------
-
+#morphologyTransformation --> előbb ellipsevel, majd rectvel
 kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
-grad = cv2.morphologyEx(im_th, cv2.MORPH_CLOSE, kernel)
-#cv2.imwrite("04.jpg", grad)-----------------------------------------------------------------------------------------------------
-
+img_morphologyWithEllipse = cv2.morphologyEx(img_thresholded, cv2.MORPH_CLOSE, kernel)
 kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (20, 1))
-connected = cv2.morphologyEx(grad, cv2.MORPH_CLOSE, kernel)
-#cv2.imwrite("05.jpg", connected)-----------------------------------------------------------------------------------------------------
+img_morphologyWithRect = cv2.morphologyEx(img_morphologyWithEllipse, cv2.MORPH_CLOSE, kernel)
 
-_,contours, hierarchy = cv2.findContours(connected.copy(), cv2.RETR_TREE , cv2.CHAIN_APPROX_SIMPLE)
+#A feldolgozandó képregényoldalaknak általában fehér kerete van.. Ez problémát okoz akkor, amikor a képregénybuborék
+# "összeér" a kép keretével, ezért a keretet kitöltöm a négy sarkánál.
+img_frame = img_thresholded.copy()
+cv2.floodFill(img_frame, maskForTheFill, (0, 0), 128)
+cv2.floodFill(img_frame, maskForTheFill, (COLLUMS - 1, 0), 128)
+cv2.floodFill(img_frame, maskForTheFill, (0, ROWS - 1), 128)
+cv2.floodFill(img_frame, maskForTheFill, (COLLUMS - 1, ROWS - 1), 128)
 
-keretezett = img_input.copy()
-m = np.zeros(im_th.shape, dtype=np.uint8) #mask a konturokhoz
+#Az átalakított képen megkeresem a kontúrokat
+_,contours, hierarchy = cv2.findContours(img_morphologyWithRect.copy(), cv2.RETR_TREE , cv2.CHAIN_APPROX_SIMPLE)
 
-im_floodfill = im_th.copy()
+#másolatok készítése
+img_signed = img_input.copy()
+img_filled = img_thresholded.copy()
 
 for idx in range(len(contours)):
+    #Az adott kontúr köré írható téglalap adatait kigyűjtöm
     x, y, w, h = cv2.boundingRect(contours[idx])
-    m[y:y+h, x:x+w] = 0
-    cv2.drawContours(m, contours, idx, (255, 255, 255), -1)
-    r = float(cv2.countNonZero(m[y:y+h, x:x+w])) / (w * h)
 
-    if w > LETTERHIGHT/2 and h > LETTERHIGHT and h < LETTERHIGHT*5: #0.7 8 8 30    r > 0.7 and
-        cv2.rectangle(keretezett, (x, y), (x+w-1, y+h-1), (0, 255, 0), 2)
+    #Ezeket a részeket megjelölöm a maskon
+    maskForTheContours[y:y + h, x:x + w] = 0
+    cv2.drawContours(maskForTheContours, contours, idx, (255, 255, 255), -1)
+
+    #Ha egy adott kontúr megfelel a feltételnek, akkor az olyan tulajdonságokkal rendelkezik mint amiket egy
+    #szövegbuborék is, ezért ezeket a részeket eltárolom
+    if w > LETTERHIGHT/2 and h > LETTERHIGHT and h < LETTERHIGHT*5:
+        #Egy zöld keretet teszek a megtalált rész köré
+        cv2.rectangle(img_signed, (x, y), (x+w-1, y+h-1), (0, 255, 0), 2)
+        #Kiszámítom a megtalált rész középpontjának a koordinátáját
         ax = math.floor( x+(w/2))
         ay = math.floor(y+(h/2))
-        while(im_floodfill[ay,ax] == 255):
-            a = randint(0, 3)
+
+        #Ha a megtaláltalakzat közepén található pixel fekete színű, aklkor az valószínűleg egy betű, része, ezért
+        #addig változtatom a pozíciót amíg el nem érek egy fehér részhez, amely a szövegbuborék hátterére mutat.
+        while(img_filled[ay,ax] == 255):
+            a = randint(0, 4)
             if a == 0:
                 ax = ax - 1
             elif a == 1:
                 ax = ax + 1
-            elif a == 1:
+            elif a == 2:
                 ay = ay + 1
             else:
-                ay = ay + 1
-        cv2.floodFill(im_floodfill, mask, (ax, ay), 128)
-#----------------------------------------------------------------------------
-#cv2.imwrite("06.jpg", keretezett)-----------------------------------------------------------------------------------------------------
-#cv2.imwrite("07.jpg", im_floodfill)-----------------------------------------------------------------------------------------------------
+                ay = ay - 1
+        #A binarizált kép másolatán a megtalált alakokat kitöltöm szürke színnel
+        cv2.floodFill(img_filled, maskForTheFill, (ax, ay), 128)
 
-im_floodfill_inv = cv2.bitwise_not(im_floodfill)
+#Invertálom a képet.
+img_filled_inv = cv2.bitwise_not(img_filled)
+#Mivel a megtalált részeket kitöltöttem azzal a szürke színnel, amely a skála középső eleme, ezért ez az eredeti,
+#valamint az invertált képen is ugyanazzal a színnel rendelkezik. Ahhoz, hogy csak ezeket a részeket tartsam meg,
+#A két képből csak azokat a pixeleket másolom át, amelyek megegyeznek mindkét képen.
+img_foundPartsInGrey = img_thresholded | img_filled_inv
 
-im_out = im_th | im_floodfill_inv
-#cv2.imwrite("08.jpg", im_out)-----------------------------------------------------------------------------------------------------
+#A "kivonás" után a megtalált részek szürkével jelennek meg, ezeket a részeket átalakítom feketévé, valamint invertálom
+_, img_foundParts = cv2.threshold(img_foundPartsInGrey, TRESHHOLDMIN, 255, cv2.THRESH_BINARY_INV)
 
-th, im_th2 = cv2.threshold(im_out, TRESHHOLDMIN, 255, cv2.THRESH_BINARY)
-#cv2.imwrite("09.jpg", im_th2)-----------------------------------------------------------------------------------------------------
-
-im_th3 = cv2.bitwise_not(im_th2)
-#cv2.imwrite("10.jpg", im_th3)-----------------------------------------------------------------------------------------------------
-_,contour,hier = cv2.findContours(im_th3,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
-
+img_foundPartsFilled = img_foundParts.copy()
+#a kapott képen kigyűjtöm a kontúrokat, majd a talált kontúrokat kitöltöm a köríven belül.
+_,contour,hier = cv2.findContours(img_foundParts,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
 for cnt in contour:
-    cv2.drawContours(im_th3,[cnt],0,255,-1)
-#cv2.imwrite("11.jpg", im_th3)-----------------------------------------------------------------------------------------------------
+    cv2.drawContours(img_foundPartsFilled,[cnt],0,255,-1)
 
-segm = cv2.bitwise_not(im_th3)
-#cv2.imwrite("12.jpg", segm)-----------------------------------------------------------------------------------------------------
+#Ezt követően a keret feldolgozása következik. Hasonló módon mint korábban, a keret szürke színnel lett megjelölve,
+#ezért "kivonva" belőle az inverzét, csak a szürke részt kapjuk eredményül, ami maga a keret.
+img_frame_inv = cv2.bitwise_not(img_frame)
+img_frameInGrey = img_thresholded | img_frame_inv
 
+#inverz binarizálom
+_, img_frameAfterTH = cv2.threshold(img_frameInGrey, TRESHHOLDMIN, 255, cv2.THRESH_BINARY_INV)
 
-#---------------------------------------------------
-im_frame_inv = cv2.bitwise_not(im_frame)
-
-im_keret = im_th | im_frame_inv
-#cv2.imwrite("13.1.jpg", im_keret)-----------------------------------------------------------------------------------------------------
-
-th, im_th2 = cv2.threshold(im_keret, TRESHHOLDMIN, 255, cv2.THRESH_BINARY)
-#cv2.imwrite("13.2.jpg", im_th2)-----------------------------------------------------------------------------------------------------
-
-im_th3 = cv2.bitwise_not(im_th2)
-#cv2.imwrite("13.3.jpg", im_th3)-----------------------------------------------------------------------------------------------------
-_,contour,hier = cv2.findContours(im_th3,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
-
+img_frameWithUpgrade = img_frameAfterTH.copy();
+_,contour,hier = cv2.findContours(img_frameAfterTH,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
 for cnt in contour:
-    cv2.drawContours(im_th3,[cnt],0,255,2)
-#cv2.imwrite("13.4.jpg", im_th3)-----------------------------------------------------------------------------------------------------
+    #itt a vonalvastagság 2, amely eltávolít néhány zajt, valamint kiegyenesíti a blokkok határait.
+    cv2.drawContours(img_frameWithUpgrade,[cnt],0,255,2)
 
-segm2 = cv2.bitwise_not(im_th3)
-#cv2.imwrite("13.5.jpg", segm2)-----------------------------------------------------------------------------------------------------
+#A képek invertálása után, elvágzem rajtuk a logikai AND műveletet
+img_removableParts = cv2.bitwise_not(img_foundPartsFilled )
+img_removableFrame = cv2.bitwise_not(img_frameWithUpgrade )
+img_merged = img_removableParts & img_removableFrame
 
-
-sss = segm & segm2
-
-#cv2.imwrite("13.jpg", sss)-----------------------------------------------------------------------------------------------------
-
-talan = img_input.copy()
-
+img_colorWithoutTheParts = img_input.copy()
 for i in range(ROWS):
     for j in range(COLLUMS):
-        if sss[i,j] == 0:
-            talan[i,j] = 255
+        if img_merged[i,j] == 0:
+            img_colorWithoutTheParts[i,j] = 255
 
-
-
-cv2.imwrite("completed.jpg", talan)
+cv2.imwrite("completed.jpg", img_colorWithoutTheParts)
 #---------------------------------------------------
 # cv2.imwrite(sys.argv[3]+"\\"+sys.argv[2], talan)
 #---------------------------------------------------
 
-"""
-blurred = cv2.GaussianBlur(talan, (5, 5), 0)
-edges = cv2.Canny(blurred,250,250);
-cv2.imwrite("15.jpg", edges)
 
-kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
-grad = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
-cv2.imwrite("16.jpg", grad)
-
-e = cv2.SuperpixelSEEDS.getLabelContourMask(talan, 2)
-"""
-
-
-#---------------------------------------------------------------------------------------------------------------------------
-"""
-csakfekete = cv2.cvtColor(talan, cv2.COLOR_BGR2GRAY)
-
-black = np.zeros(csakfekete.shape, dtype=np.uint8)
-black = cv2.bitwise_not(black);
-
-for i in range(ROWS):
-    for j in range(COLLUMS):
-        if csakfekete[i,j] < 60:
-            black[i,j] = 0
-
-cv2.imwrite("15.jpg", black)
-
-kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
-grad = cv2.morphologyEx(black, cv2.MORPH_CLOSE, kernel)
-cv2.imwrite("16.jpg", grad)
-
-kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (20, 1))
-connected = cv2.morphologyEx(grad, cv2.MORPH_CLOSE, kernel)
-cv2.imwrite("17.jpg", connected)
-
-#---------------------------------------------------csak a fekete elmosva
-_,contours, hierarchy = cv2.findContours(connected.copy(), cv2.RETR_TREE , cv2.CHAIN_APPROX_SIMPLE)
-
-keretezett = talan.copy()
-m = np.zeros(black.shape, dtype=np.uint8) #mask a konturokhoz
-
-im_floodfill = black.copy()
-
-for idx in range(len(contours)):
-    x, y, w, h = cv2.boundingRect(contours[idx])
-    m[y:y+h, x:x+w] = 0
-    cv2.drawContours(m, contours, idx, (255, 255, 255), -1)
-    r = float(cv2.countNonZero(m[y:y+h, x:x+w])) / (w * h)
-
-    if r > 0.7 and w > 4 and h > 4 and h < 30:
-        cv2.rectangle(keretezett, (x, y), (x+w-1, y+h-1), (0, 255, 0), 2)
-        ax = math.floor( x+(w/2))
-        ay = math.floor(y+(h/2))
-        cv2.floodFill(im_floodfill, mask, (ax, ay), 128)
-
-cv2.imwrite("18.jpg", keretezett)
-cv2.imwrite("19.jpg", im_floodfill)
-#----------------------------------------------------------------------------
-
-im_floodfill_inv = cv2.bitwise_not(im_floodfill)
-
-im_out = black | im_floodfill_inv
-cv2.imwrite("20.jpg", im_out)
-
-th, im_th2 = cv2.threshold(im_out, TRESHHOLDMIN, 255, cv2.THRESH_BINARY)
-cv2.imwrite("21.jpg", im_th2)
-
-"""
-"""
-im_th3 = cv2.bitwise_not(im_th2)
-cv2.imwrite("22.jpg", im_th3)
-
-
-_,contour,hier = cv2.findContours(im_th3,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
-for cnt in contour:
-    cv2.drawContours(im_th3,[cnt], 0, 255, -1)
-cv2.imwrite("23.jpg", im_th3)
-
-segm = cv2.bitwise_not(im_th3)
-cv2.imwrite("24.jpg", segm)
-"""
-"""
-
-talan2 = talan.copy()
-for i in range(ROWS):
-    for j in range(COLLUMS):
-        if im_th2[i,j] == 0:
-            talan2[i,j] = 0
-
-cv2.imwrite("22.jpg", talan2)
-"""
 
 # if sys.argv[4] >=-1 and sys.argv[4] == sys.argv[5]:
 #     save = True
 # else:
 #     save = False
-saveIndex = 0
+saveIndex = -1
 
 def Inc():
     global saveIndex
     saveIndex +=1
-    return saveIndex
+    if saveIndex < 10:
+        return "0{}".format(saveIndex)
+    else:
+        return "{}".format(saveIndex)
 
 #-------------------------------------
 save = True
 #-------------------------------------
+
 if save:
-    cv2.imwrite("{} - Input image.jpg".format(Inc()), img_input)
-    cv2.imwrite("{} - Greyscale image.jpg".format(Inc()), img_greyscaled)
-
-
+    dest = "Steps\\"
+    cv2.imwrite(dest + "{} - Input image.jpg".format(Inc()), img_input)
+    cv2.imwrite(dest + "{} - Greyscale image.jpg".format(Inc()), img_greyscaled)
+    cv2.imwrite(dest + "{} - Thresholded image.jpg".format(Inc()), img_thresholded)
+    cv2.imwrite(dest + "{} - Morphology Transformation with ellipse image.jpg".format(Inc()), img_morphologyWithEllipse)
+    cv2.imwrite(dest + "{} - Morphology Transformation with rectangle image.jpg".format(Inc()), img_morphologyWithRect)
+    cv2.imwrite(dest + "{} - The found parts are signed with green rects.jpg".format(Inc()), img_signed)
+    cv2.imwrite(dest + "{} - The found parts are filled with grey colon in the binaryzed image.jpg".format(Inc()), img_filled)
+    cv2.imwrite(dest + "{} - Just the found parts in grey color.jpg".format(Inc()), img_foundPartsInGrey)
+    cv2.imwrite(dest + "{} - Just the found parts, after invert.jpg".format(Inc()), img_foundParts)
+    cv2.imwrite(dest + "{} - The found parts are filled.jpg".format(Inc()), img_foundPartsFilled)
+    cv2.imwrite(dest + "{} - The frame is gray.jpg".format(Inc()), img_frame)
+    cv2.imwrite(dest + "{} - Just the frame.jpg".format(Inc()), img_frameInGrey)
+    cv2.imwrite(dest + "{} - The frme after inverz binaryzing.jpg".format(Inc()), img_frameAfterTH)
+    cv2.imwrite(dest + "{} - The frame after processing.jpg".format(Inc()), img_frameWithUpgrade)
+    cv2.imwrite(dest + "{} - Merged removable parts.jpg".format(Inc()), img_merged)
+    cv2.imwrite(dest + "{} - The color image without the found parts.jpg".format(Inc()), img_colorWithoutTheParts)
