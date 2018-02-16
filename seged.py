@@ -67,6 +67,17 @@ for idx in range(len(contours)):
     #Ha egy adott kontúr megfelel a feltételnek, akkor az olyan tulajdonságokkal rendelkezik mint amiket egy
     #szövegbuborék is, ezért ezeket a részeket eltárolom
     if w > LETTERHIGHT/2 and h > LETTERHIGHT and h < LETTERHIGHT*5:
+
+
+
+        #TODO
+
+
+
+
+
+
+
         #Egy zöld keretet teszek a megtalált rész köré
         cv2.rectangle(img_signed, (x, y), (x+w-1, y+h-1), (0, 255, 0), 2)
         #Kiszámítom a megtalált rész középpontjának a koordinátáját
@@ -133,7 +144,6 @@ cv2.imwrite("completed.jpg", img_colorWithoutTheParts)
 #---------------------------------------------------
 # cv2.imwrite(sys.argv[3]+"\\"+sys.argv[2], talan)
 #---------------------------------------------------
-
 
 
 # if sys.argv[4] >=-1 and sys.argv[4] == sys.argv[5]:
