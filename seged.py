@@ -16,15 +16,24 @@ pytesseract.pytesseract.tesseract_cmd = 'c:\\Program Files (x86)\\Tesseract-OCR\
     argv[3] --> a feldolgozott képek mentési helyének elérési útvonala
     argv[4] --> ha van szükség a feldolgozási lépések megjelenítésére, akkor ez megadja, hogy melyik képen
     argv[5] --> a kép sorszáma. (A feldolgozandó képek között hányadik.)
+    argv[6] --> felhasználói mód
 --------------------------------------
 
+-----------Felhasználói módok---------
+    argv[6] = 0 --> A kép minőségének változatlanul hagyása, a szövegbuborékok üresen hagyásával
+    argv[6] = 1 --> A kép minőségének változatlanul hagyása, a szövegbuborékok feltöltése a lefordított szöveggel
+    argv[6] = 2 --> A kép minőségének feljavítása, a szövegbuborékok üresen hagyásával
+    argv[6] = 3 --> A kép minőségének feljavítása, a szövegbuborékok feltöltése az eredeti szöveggel
+    argv[6] = 4 --> A kép minőségének feljavítása, a szövegbuborékok feltöltése a lefordított szöveggel
+--------------------------------------
+    
 ------------Kiegészítés---------------
     " _ " nevű változó egy "szemét változó", ebben tárolom azokat a visszaadott értékeket, amelyeket nem használok
 --------------------------------------
 
 """
 #------------------------------------------------------------------
-img_input = cv2.imread("C:\\Users\\Adam\\Desktop\\samples\\xmen1.jpg") #1--> greyscale
+img_input = cv2.imread("C:\\Users\\Adam\\Desktop\\samples\\hulk2.jpg") #1--> greyscale
 #img_input = cv2.imread(sys.argv[1]) #1--> greyscale
 #------------------------------------------------------------------
 
@@ -144,6 +153,21 @@ for i in range(len(contours)):
 
     cv2.imwrite("seged\\proba\\{}b.jpg".format(i), helperPartOfTheOriginalColorImage)
 
+
+
+
+
+
+    #TODO 1 nagy képre összepakolni az összes szöveget (threshold)
+
+
+
+
+
+
+
+
+
     partsBIGTH.append(helperMask)
     parts.append(helperPartOfTheOriginalColorImage)
 
@@ -165,11 +189,6 @@ for i in range(len(parts)):
     if text.__len__() > 4:
         cv2.imwrite("seged\\szoveges\\{}.jpg".format(i), parts[i])
         img_RealBubbles = img_RealBubbles | partsBIGTH[i]
-
-
-cv2.imwrite("seged\\szoveges\\aaaa.jpg", img_RealBubbles)
-
-
 
 #-----------------------------------------------------------------------------------------------------------------------------------
 #Ezt követően a keret feldolgozása következik. Hasonló módon mint korábban, a keret szürke színnel lett megjelölve,
