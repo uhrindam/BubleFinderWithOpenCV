@@ -3,6 +3,10 @@ import numpy as np
 import math
 from random import randint
 import sys
+import os
+from PIL import Image
+import pytesseract
+pytesseract.pytesseract.tesseract_cmd = 'c:\\Program Files (x86)\\Tesseract-OCR\\tesseract.exe'
 
 """
 -----------Argumentum lista-----------
@@ -20,7 +24,7 @@ import sys
 
 """
 #------------------------------------------------------------------
-img_input = cv2.imread("C:\\Users\\Adam\\Desktop\\samples\\hulk1.jpg") #1--> greyscale
+img_input = cv2.imread("C:\\Users\\Adam\\Desktop\\samples\\xmen1.jpg") #1--> greyscale
 #img_input = cv2.imread(sys.argv[1]) #1--> greyscale
 #------------------------------------------------------------------
 
@@ -67,17 +71,6 @@ for idx in range(len(contours)):
     #Ha egy adott kontúr megfelel a feltételnek, akkor az olyan tulajdonságokkal rendelkezik mint amiket egy
     #szövegbuborék is, ezért ezeket a részeket eltárolom
     if w > LETTERHIGHT/2 and h > LETTERHIGHT and h < LETTERHIGHT*5:
-
-
-
-        #TODO
-
-
-
-
-
-
-
         #Egy zöld keretet teszek a megtalált rész köré
         cv2.rectangle(img_signed, (x, y), (x+w-1, y+h-1), (0, 255, 0), 2)
         #Kiszámítom a megtalált rész középpontjának a koordinátáját
@@ -88,14 +81,14 @@ for idx in range(len(contours)):
         #addig változtatom a pozíciót amíg el nem érek egy fehér részhez, amely a szövegbuborék hátterére mutat.
         while(img_filled[ay,ax] == 255):
             a = randint(0, 4)
-            if a == 0:
+            if a == 0 and ax - 1 > 0:
                 ax = ax - 1
-            elif a == 1:
+            elif a == 1 and ax + 1 < ROWS:
                 ax = ax + 1
-            elif a == 2:
-                ay = ay + 1
-            else:
+            elif a == 2 and ay - 1 > 0:
                 ay = ay - 1
+            elif a == 3 and ay + 1 < COLLUMS:
+                ay = ay + 1
         #A binarizált kép másolatán a megtalált alakokat kitöltöm szürke színnel
         cv2.floodFill(img_filled, maskForTheFill, (ax, ay), 128)
 
@@ -114,7 +107,71 @@ img_foundPartsFilled = img_foundParts.copy()
 _,contour,hier = cv2.findContours(img_foundParts,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
 for cnt in contour:
     cv2.drawContours(img_foundPartsFilled,[cnt],0,255,-1)
+#-----------------------------------------------------------------------------------------------------------------------------------
 
+
+
+
+_,contours, hierarchy = cv2.findContours(img_foundPartsFilled, cv2.RETR_TREE , cv2.CHAIN_APPROX_SIMPLE)
+
+parts = []
+partsBIGTH = []
+for i in range(len(contours)):
+    #Az alakzat köré írható tégalalp adatait kigyűjtöm
+    x, y, w, h = cv2.boundingRect(contours[i])
+
+    helperMask = np.zeros((ROWS, COLLUMS), dtype=np.uint8)
+    for j in range(len(contours[i])):
+        posX = contours[i][j][0][1]
+        posY = contours[i][j][0][0]
+        helperMask[posX, posY] = 255
+    cv2.drawContours(helperMask, contours, i, (255, 255, 255), -1)
+
+    cv2.imwrite("seged\\proba\\{}a.jpg".format(i), helperMask)
+
+
+    helperPartOfTheHelperMask = helperMask[y:y + h, x:x + w]
+
+    littleROWS, littleCOLLUMS= helperPartOfTheHelperMask.shape
+
+    helperPartOfTheOriginalColorImage = np.zeros((littleROWS, littleCOLLUMS, 3), dtype=np.uint8)
+    helperPartOfTheOriginalColorImage.fill(255)
+
+    for pixX in range(littleROWS):
+        for pixY in range(littleCOLLUMS):
+            if helperPartOfTheHelperMask[pixX, pixY] == 255:
+                helperPartOfTheOriginalColorImage[pixX, pixY] = img_input[pixX + y, pixY + x]
+
+    cv2.imwrite("seged\\proba\\{}b.jpg".format(i), helperPartOfTheOriginalColorImage)
+
+    partsBIGTH.append(helperMask)
+    parts.append(helperPartOfTheOriginalColorImage)
+
+img_RealBubbles = np.zeros((ROWS, COLLUMS), dtype=np.uint8)
+for i in range(len(parts)):
+    textGrey = cv2.cvtColor(parts[i], cv2.COLOR_BGR2GRAY)
+    _, textThresholded = cv2.threshold(textGrey, 140, 255, cv2.THRESH_BINARY_INV)
+
+    filename = "{}.jpg".format(os.getpid())
+    cv2.imwrite(filename, textThresholded)
+
+    cv2.imwrite("seged\\proba\\{}c.jpg".format(i), textThresholded)
+
+    text = pytesseract.image_to_string(Image.open( filename))
+    os.remove(filename)
+
+    print("\n {}. rész: ".format(i) + text + "\n\n{}".format(text.__len__()))
+
+    if text.__len__() > 4:
+        cv2.imwrite("seged\\szoveges\\{}.jpg".format(i), parts[i])
+        img_RealBubbles = img_RealBubbles | partsBIGTH[i]
+
+
+cv2.imwrite("seged\\szoveges\\aaaa.jpg", img_RealBubbles)
+
+
+
+#-----------------------------------------------------------------------------------------------------------------------------------
 #Ezt követően a keret feldolgozása következik. Hasonló módon mint korábban, a keret szürke színnel lett megjelölve,
 #ezért "kivonva" belőle az inverzét, csak a szürke részt kapjuk eredményül, ami maga a keret.
 img_frame_inv = cv2.bitwise_not(img_frame)
@@ -128,9 +185,10 @@ _,contour,hier = cv2.findContours(img_frameAfterTH,cv2.RETR_CCOMP,cv2.CHAIN_APPR
 for cnt in contour:
     #itt a vonalvastagság 2, amely eltávolít néhány zajt, valamint kiegyenesíti a blokkok határait.
     cv2.drawContours(img_frameWithUpgrade,[cnt],0,255,2)
+#-----------------------------------------------------------------------------------------------------------------------------------
 
 #A képek invertálása után, elvágzem rajtuk a logikai AND műveletet
-img_removableParts = cv2.bitwise_not(img_foundPartsFilled )
+img_removableParts = cv2.bitwise_not(img_RealBubbles )
 img_removableFrame = cv2.bitwise_not(img_frameWithUpgrade )
 img_merged = img_removableParts & img_removableFrame
 
@@ -176,9 +234,10 @@ if save:
     cv2.imwrite(dest + "{} - Just the found parts in grey color.jpg".format(Inc()), img_foundPartsInGrey)
     cv2.imwrite(dest + "{} - Just the found parts, after invert.jpg".format(Inc()), img_foundParts)
     cv2.imwrite(dest + "{} - The found parts are filled.jpg".format(Inc()), img_foundPartsFilled)
+    cv2.imwrite(dest + "{} - Only the real bubbles.jpg".format(Inc()), img_RealBubbles)
     cv2.imwrite(dest + "{} - The frame is gray.jpg".format(Inc()), img_frame)
     cv2.imwrite(dest + "{} - Just the frame.jpg".format(Inc()), img_frameInGrey)
-    cv2.imwrite(dest + "{} - The frme after inverz binaryzing.jpg".format(Inc()), img_frameAfterTH)
+    cv2.imwrite(dest + "{} - The frame after inverz binaryzing.jpg".format(Inc()), img_frameAfterTH)
     cv2.imwrite(dest + "{} - The frame after processing.jpg".format(Inc()), img_frameWithUpgrade)
     cv2.imwrite(dest + "{} - Merged removable parts.jpg".format(Inc()), img_merged)
     cv2.imwrite(dest + "{} - The color image without the found parts.jpg".format(Inc()), img_colorWithoutTheParts)
