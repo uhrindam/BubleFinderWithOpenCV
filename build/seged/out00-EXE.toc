@@ -1,5 +1,5 @@
 ('C:\\Users\\Adam\\Desktop\\seged\\dist\\seged.exe',
- False,
+ True,
  False,
  False,
  None,
@@ -35,13 +35,13 @@
    'c:\\program files (x86)\\python '
    '3.6\\lib\\site-packages\\PyInstaller\\loader\\rthooks\\pyi_rth_multiprocessing.py',
    'PYSOURCE'),
-  ('pyi_rth_pkgres',
-   'c:\\program files (x86)\\python '
-   '3.6\\lib\\site-packages\\PyInstaller\\loader\\rthooks\\pyi_rth_pkgres.py',
-   'PYSOURCE'),
   ('pyi_rth_win32comgenpy',
    'c:\\program files (x86)\\python '
    '3.6\\lib\\site-packages\\PyInstaller\\loader\\rthooks\\pyi_rth_win32comgenpy.py',
+   'PYSOURCE'),
+  ('pyi_rth_pkgres',
+   'c:\\program files (x86)\\python '
+   '3.6\\lib\\site-packages\\PyInstaller\\loader\\rthooks\\pyi_rth_pkgres.py',
    'PYSOURCE'),
   ('seged', 'C:\\Users\\Adam\\Desktop\\seged\\seged.py', 'PYSOURCE'),
   ('VCRUNTIME140.dll',
@@ -58,6 +58,21 @@
    'c:\\program files (x86)\\python '
    '3.6\\lib\\site-packages\\pypiwin32_system32\\pythoncom36.dll',
    'BINARY'),
+  ('win32wnet',
+   'c:\\program files (x86)\\python '
+   '3.6\\lib\\site-packages\\win32\\win32wnet.pyd',
+   'EXTENSION'),
+  ('_ctypes',
+   'c:\\program files (x86)\\python 3.6\\DLLs\\_ctypes.pyd',
+   'EXTENSION'),
+  ('win32api',
+   'c:\\program files (x86)\\python '
+   '3.6\\lib\\site-packages\\win32\\win32api.pyd',
+   'EXTENSION'),
+  ('win32com.shell.shell',
+   'c:\\program files (x86)\\python '
+   '3.6\\lib\\site-packages\\win32comext\\shell\\shell.pyd',
+   'EXTENSION'),
   ('win32trace',
    'c:\\program files (x86)\\python '
    '3.6\\lib\\site-packages\\win32\\win32trace.pyd',
@@ -69,21 +84,6 @@
   ('_win32sysloader',
    'c:\\program files (x86)\\python '
    '3.6\\lib\\site-packages\\win32\\_win32sysloader.pyd',
-   'EXTENSION'),
-  ('win32api',
-   'c:\\program files (x86)\\python '
-   '3.6\\lib\\site-packages\\win32\\win32api.pyd',
-   'EXTENSION'),
-  ('win32wnet',
-   'c:\\program files (x86)\\python '
-   '3.6\\lib\\site-packages\\win32\\win32wnet.pyd',
-   'EXTENSION'),
-  ('_ctypes',
-   'c:\\program files (x86)\\python 3.6\\DLLs\\_ctypes.pyd',
-   'EXTENSION'),
-  ('win32com.shell.shell',
-   'c:\\program files (x86)\\python '
-   '3.6\\lib\\site-packages\\win32comext\\shell\\shell.pyd',
    'EXTENSION'),
   ('_multiprocessing',
    'c:\\program files (x86)\\python 3.6\\DLLs\\_multiprocessing.pyd',
@@ -101,6 +101,9 @@
   ('_hashlib',
    'c:\\program files (x86)\\python 3.6\\DLLs\\_hashlib.pyd',
    'EXTENSION'),
+  ('select',
+   'c:\\program files (x86)\\python 3.6\\DLLs\\select.pyd',
+   'EXTENSION'),
   ('_bz2', 'c:\\program files (x86)\\python 3.6\\DLLs\\_bz2.pyd', 'EXTENSION'),
   ('_lzma',
    'c:\\program files (x86)\\python 3.6\\DLLs\\_lzma.pyd',
@@ -108,8 +111,17 @@
   ('_socket',
    'c:\\program files (x86)\\python 3.6\\DLLs\\_socket.pyd',
    'EXTENSION'),
-  ('select',
-   'c:\\program files (x86)\\python 3.6\\DLLs\\select.pyd',
+  ('PIL._webp',
+   'c:\\program files (x86)\\python '
+   '3.6\\lib\\site-packages\\PIL\\_webp.cp36-win32.pyd',
+   'EXTENSION'),
+  ('PIL._imagingtk',
+   'c:\\program files (x86)\\python '
+   '3.6\\lib\\site-packages\\PIL\\_imagingtk.cp36-win32.pyd',
+   'EXTENSION'),
+  ('PIL._imaging',
+   'c:\\program files (x86)\\python '
+   '3.6\\lib\\site-packages\\PIL\\_imaging.cp36-win32.pyd',
    'EXTENSION'),
   ('numpy.core.multiarray',
    'c:\\program files (x86)\\python '
@@ -139,13 +151,13 @@
    'c:\\program files (x86)\\python '
    '3.6\\lib\\site-packages\\numpy\\fft\\fftpack_lite.cp36-win32.pyd',
    'EXTENSION'),
-  ('numpy.linalg.lapack_lite',
-   'c:\\program files (x86)\\python '
-   '3.6\\lib\\site-packages\\numpy\\linalg\\lapack_lite.cp36-win32.pyd',
-   'EXTENSION'),
   ('numpy.linalg._umath_linalg',
    'c:\\program files (x86)\\python '
    '3.6\\lib\\site-packages\\numpy\\linalg\\_umath_linalg.cp36-win32.pyd',
+   'EXTENSION'),
+  ('numpy.linalg.lapack_lite',
+   'c:\\program files (x86)\\python '
+   '3.6\\lib\\site-packages\\numpy\\linalg\\lapack_lite.cp36-win32.pyd',
    'EXTENSION'),
   ('cv2.cv2',
    'c:\\program files (x86)\\python '
@@ -163,49 +175,49 @@
   ('base_library.zip',
    'C:\\Users\\Adam\\Desktop\\seged\\build\\seged\\base_library.zip',
    'DATA'),
-  ('lib2to3\\Grammar3.6.3.candidate.1.pickle',
-   'c:\\program files (x86)\\python '
-   '3.6\\lib\\lib2to3\\Grammar3.6.3.candidate.1.pickle',
-   'DATA'),
-  ('lib2to3\\PatternGrammar3.6.3.final.0.pickle',
-   'c:\\program files (x86)\\python '
-   '3.6\\lib\\lib2to3\\PatternGrammar3.6.3.final.0.pickle',
-   'DATA'),
   ('lib2to3\\Grammar3.6.2.final.0.pickle',
    'c:\\program files (x86)\\python '
    '3.6\\lib\\lib2to3\\Grammar3.6.2.final.0.pickle',
    'DATA'),
-  ('lib2to3\\tests\\data\\README',
-   'c:\\program files (x86)\\python 3.6\\lib\\lib2to3\\tests\\data\\README',
-   'DATA'),
-  ('lib2to3\\PatternGrammar.txt',
-   'c:\\program files (x86)\\python 3.6\\lib\\lib2to3\\PatternGrammar.txt',
-   'DATA'),
-  ('Include\\pyconfig.h',
-   'c:\\program files (x86)\\python 3.6\\Include\\pyconfig.h',
-   'DATA'),
-  ('lib2to3\\Grammar3.6.2.candidate.2.pickle',
-   'c:\\program files (x86)\\python '
-   '3.6\\lib\\lib2to3\\Grammar3.6.2.candidate.2.pickle',
-   'DATA'),
-  ('lib2to3\\PatternGrammar3.6.2.final.0.pickle',
-   'c:\\program files (x86)\\python '
-   '3.6\\lib\\lib2to3\\PatternGrammar3.6.2.final.0.pickle',
-   'DATA'),
-  ('lib2to3\\PatternGrammar3.6.3.candidate.1.pickle',
-   'c:\\program files (x86)\\python '
-   '3.6\\lib\\lib2to3\\PatternGrammar3.6.3.candidate.1.pickle',
+  ('lib2to3\\Grammar.txt',
+   'c:\\program files (x86)\\python 3.6\\lib\\lib2to3\\Grammar.txt',
    'DATA'),
   ('lib2to3\\Grammar3.6.3.final.0.pickle',
    'c:\\program files (x86)\\python '
    '3.6\\lib\\lib2to3\\Grammar3.6.3.final.0.pickle',
    'DATA'),
+  ('lib2to3\\PatternGrammar3.6.2.final.0.pickle',
+   'c:\\program files (x86)\\python '
+   '3.6\\lib\\lib2to3\\PatternGrammar3.6.2.final.0.pickle',
+   'DATA'),
+  ('lib2to3\\PatternGrammar.txt',
+   'c:\\program files (x86)\\python 3.6\\lib\\lib2to3\\PatternGrammar.txt',
+   'DATA'),
+  ('lib2to3\\PatternGrammar3.6.3.final.0.pickle',
+   'c:\\program files (x86)\\python '
+   '3.6\\lib\\lib2to3\\PatternGrammar3.6.3.final.0.pickle',
+   'DATA'),
+  ('lib2to3\\PatternGrammar3.6.3.candidate.1.pickle',
+   'c:\\program files (x86)\\python '
+   '3.6\\lib\\lib2to3\\PatternGrammar3.6.3.candidate.1.pickle',
+   'DATA'),
+  ('Include\\pyconfig.h',
+   'c:\\program files (x86)\\python 3.6\\Include\\pyconfig.h',
+   'DATA'),
+  ('lib2to3\\Grammar3.6.3.candidate.1.pickle',
+   'c:\\program files (x86)\\python '
+   '3.6\\lib\\lib2to3\\Grammar3.6.3.candidate.1.pickle',
+   'DATA'),
+  ('lib2to3\\tests\\data\\README',
+   'c:\\program files (x86)\\python 3.6\\lib\\lib2to3\\tests\\data\\README',
+   'DATA'),
+  ('lib2to3\\Grammar3.6.2.candidate.2.pickle',
+   'c:\\program files (x86)\\python '
+   '3.6\\lib\\lib2to3\\Grammar3.6.2.candidate.2.pickle',
+   'DATA'),
   ('lib2to3\\PatternGrammar3.6.2.candidate.2.pickle',
    'c:\\program files (x86)\\python '
    '3.6\\lib\\lib2to3\\PatternGrammar3.6.2.candidate.2.pickle',
-   'DATA'),
-  ('lib2to3\\Grammar.txt',
-   'c:\\program files (x86)\\python 3.6\\lib\\lib2to3\\Grammar.txt',
    'DATA'),
   ('seged.exe.manifest',
    'C:\\Users\\Adam\\Desktop\\seged\\build\\seged\\seged.exe.manifest',
@@ -214,8 +226,8 @@
  [],
  False,
  False,
- 1517427666,
- [('runw.exe',
+ 1524417321,
+ [('run.exe',
    'c:\\program files (x86)\\python '
-   '3.6\\lib\\site-packages\\PyInstaller\\bootloader\\Windows-32bit\\runw.exe',
+   '3.6\\lib\\site-packages\\PyInstaller\\bootloader\\Windows-32bit\\run.exe',
    'EXECUTABLE')])
