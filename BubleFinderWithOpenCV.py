@@ -6,6 +6,7 @@ import sys
 import os
 
 import pytesseract
+
 tessdata_dir_config = '--tessdata-dir "c:\\Program Files (x86)\\Tesseract-OCR\\tessdata"'
 # import pyocr.builders
 # from PIL import Image
@@ -39,9 +40,9 @@ tessdata_dir_config = '--tessdata-dir "c:\\Program Files (x86)\\Tesseract-OCR\\t
 # ------------------------------------------------------------------
 readPath = "xmen2.jpg"
 fileName = "xmen2_proc.jpg"
-writePath = ""
+writePath = "Improve\\"
 save = True
-mode = 0
+mode = "0"
 
 if len(sys.argv) > 1:
     readPath = sys.argv[1]
@@ -181,30 +182,17 @@ for i in range(len(parts)):
     # Itt nézem meg, hogy az adott kis kivágott képen található-e szöveg
     text = pytesseract.image_to_string(textThresholded, lang='eng', config=tessdata_dir_config)
 
-    # cv2.imwrite("asd.jpg", textThresholded)
-    #
-    #
-    #
-    # img = Image.open("asd.jpg")
-    # img = img.convert('L')
-    #
-    # tools = pyocr.get_available_tools()[0]
-    # text = tools.image_to_string(img)
-
-
-
-
-
-
-
     if text.__len__() > 4:
         img_RealBubbles = img_RealBubbles | partsBIGTH[i]
-        if mode == 3:
+        if mode == "1" or mode == "3":
             _, textThresholdedforTexts = cv2.threshold(textGrey, 170, 255, cv2.THRESH_BINARY_INV)
             for w in range(indexsForTheTextts[i][2]):
                 for h in range(indexsForTheTextts[i][3]):
                     if textThresholdedforTexts[h][w] == 255:
                         img_Onlytexts[indexsForTheTextts[i][1] + h][indexsForTheTextts[i][0] + w] = 255
+
+if mode == "1" or mode == "3":
+    cv2.imwrite(writePath + "Temp\\" + fileName, img_Onlytexts)
 
 # -----------------------------------------------------------------------------------------------------------------------------------
 # Ezt követően a keret feldolgozása következik. Hasonló módon mint korábban, a keret szürke színnel lett megjelölve,
@@ -232,16 +220,13 @@ for i in range(ROWS):
     for j in range(COLLUMS):
         if img_merged[i, j] == 0:
             img_colorWithoutTheParts[i, j] = 255
-        if mode == 3:
-            if img_Onlytexts[i, j] == 255:
-                img_colorWithoutTheParts[i, j] = 0
 
 # Ha a kiválasztott mentési mappa nem ugyanaz mint a feldolgozási mappa akkor az eredeti névvel, különben
 # módosított névvel menti
-if readPath != writePath + fileName + ".jpg":
-    cv2.imwrite(writePath + fileName + ".jpg", img_colorWithoutTheParts)
+if readPath != writePath + fileName:
+    cv2.imwrite(writePath + fileName, img_colorWithoutTheParts)
 else:
-    cv2.imwrite(writePath + fileName + "_Processed.jpg", img_colorWithoutTheParts)
+    cv2.imwrite(writePath + fileName[:-4] + "_Processed.jpg", img_colorWithoutTheParts)
 
 saveIndex = -1
 
@@ -256,7 +241,7 @@ def Inc():
 
 
 if save:
-    dest = writePath + "Steps\\"
+    dest = writePath + "Steps to " + fileName + "\\"
     if not os.path.exists(dest):
         os.makedirs(dest)
     cv2.imwrite(dest + "\\{} - {} - Input image.jpg".format(fileName, Inc()), img_input)
@@ -280,10 +265,9 @@ if save:
     cv2.imwrite(dest + "\\{} - {} - Just the frame.jpg".format(fileName, Inc()), img_frameInGrey)
     cv2.imwrite(dest + "\\{} - {} - The frame after inverz binaryzing.jpg"
                 .format(fileName, Inc()), img_frameAfterTH)
-    if mode == 3:
-        cv2.imwrite(dest + "\\{} - {} - Only the text.jpg"
-                    .format(fileName, Inc()), img_Onlytexts)
     cv2.imwrite(dest + "\\{} - {} - The frame after processing.jpg".format(fileName, Inc()), img_frameWithUpgrade)
+    if mode == "1" or mode == "3":
+        cv2.imwrite(dest + "\\{} - {} - Only the text.jpg".format(fileName, Inc()), img_Onlytexts)
     cv2.imwrite(dest + "\\{} - {} - Merged removable parts.jpg".format(fileName, Inc()), img_merged)
     cv2.imwrite(dest + "\\{} - {} - The color image without the found parts.jpg"
                 .format(fileName, Inc()), img_colorWithoutTheParts)
